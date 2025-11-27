@@ -7,6 +7,7 @@ android {
     namespace = "com.tuequipo.gestortareas"
     compileSdk = 34
 
+
     defaultConfig {
         applicationId = "com.tuequipo.gestortareas"
         minSdk = 24
@@ -26,6 +27,8 @@ android {
             )
         }
     }
+
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
@@ -35,6 +38,7 @@ android {
     }
     buildFeatures {
         viewBinding = true
+        
     }
 }
 
@@ -58,6 +62,9 @@ dependencies {
 
     // SharedPreferences
     implementation("androidx.preference:preference-ktx:1.2.1")
+
+    implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.1.0")
+
 
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
