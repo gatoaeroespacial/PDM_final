@@ -1,5 +1,13 @@
 const db = require('../config/database');
 
+// Función auxiliar para convertir campos numéricos a boolean
+const formatTarea = (tarea) => {
+  return {
+    ...tarea,
+    completada: Boolean(tarea.completada)
+  };
+};
+
 // Obtener todas las tareas del usuario
 exports.getTareas = async (req, res) => {
   try {
@@ -10,7 +18,10 @@ exports.getTareas = async (req, res) => {
       [userId]
     );
 
-    res.json(tareas);
+    // Convertir completada a boolean
+    const tareasFormateadas = tareas.map(formatTarea);
+
+    res.json(tareasFormateadas);
   } catch (error) {
     console.error('Error al obtener tareas:', error);
     res.status(500).json({ error: 'Error al obtener tareas' });
@@ -32,7 +43,7 @@ exports.getTarea = async (req, res) => {
       return res.status(404).json({ error: 'Tarea no encontrada' });
     }
 
-    res.json(tareas[0]);
+    res.json(formatTarea(tareas[0]));
   } catch (error) {
     console.error('Error al obtener tarea:', error);
     res.status(500).json({ error: 'Error al obtener tarea' });
@@ -45,7 +56,6 @@ exports.createTarea = async (req, res) => {
     const userId = req.userId;
     const { titulo, descripcion, materia, fecha_entrega, prioridad } = req.body;
 
-    // Validación básica
     if (!titulo) {
       return res.status(400).json({ error: 'El título es requerido' });
     }
@@ -59,7 +69,7 @@ exports.createTarea = async (req, res) => {
 
     res.status(201).json({
       message: 'Tarea creada exitosamente',
-      tarea: newTarea[0]
+      tarea: formatTarea(newTarea[0])
     });
   } catch (error) {
     console.error('Error al crear tarea:', error);
@@ -74,7 +84,6 @@ exports.updateTarea = async (req, res) => {
     const userId = req.userId;
     const { titulo, descripcion, materia, fecha_entrega, prioridad, completada } = req.body;
 
-    // Verificar que la tarea existe y pertenece al usuario
     const [tareas] = await db.query(
       'SELECT * FROM tareas WHERE id = ? AND usuario_id = ?',
       [id, userId]
@@ -84,7 +93,9 @@ exports.updateTarea = async (req, res) => {
       return res.status(404).json({ error: 'Tarea no encontrada' });
     }
 
-    // Actualizar tarea
+    // Convertir boolean a 0/1 para MySQL
+    const completadaValue = completada !== undefined ? (completada ? 1 : 0) : tareas[0].completada;
+
     await db.query(
       'UPDATE tareas SET titulo = ?, descripcion = ?, materia = ?, fecha_entrega = ?, prioridad = ?, completada = ? WHERE id = ?',
       [
@@ -93,7 +104,7 @@ exports.updateTarea = async (req, res) => {
         materia !== undefined ? materia : tareas[0].materia,
         fecha_entrega !== undefined ? fecha_entrega : tareas[0].fecha_entrega,
         prioridad || tareas[0].prioridad,
-        completada !== undefined ? completada : tareas[0].completada,
+        completadaValue,
         id
       ]
     );
@@ -102,7 +113,7 @@ exports.updateTarea = async (req, res) => {
 
     res.json({
       message: 'Tarea actualizada exitosamente',
-      tarea: updatedTarea[0]
+      tarea: formatTarea(updatedTarea[0])
     });
   } catch (error) {
     console.error('Error al actualizar tarea:', error);
@@ -110,13 +121,12 @@ exports.updateTarea = async (req, res) => {
   }
 };
 
-// Eliminar tarea
+// Eliminar tarea (sin cambios necesarios)
 exports.deleteTarea = async (req, res) => {
   try {
     const { id } = req.params;
     const userId = req.userId;
 
-    // Verificar que la tarea existe y pertenece al usuario
     const [tareas] = await db.query(
       'SELECT * FROM tareas WHERE id = ? AND usuario_id = ?',
       [id, userId]
